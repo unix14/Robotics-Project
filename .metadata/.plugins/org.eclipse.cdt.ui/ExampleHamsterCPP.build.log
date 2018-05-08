@@ -1,0 +1,6 @@
+00:22:36 **** Incremental Build of configuration Debug for project ExampleHamsterCPP ****
+make all 
+make: Nothing to be done for `all'.
+
+00:22:36 Build Finished (took 84ms)
+

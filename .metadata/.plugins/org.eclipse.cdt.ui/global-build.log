@@ -1,0 +1,44 @@
+17:00:24 **** Incremental Build of configuration Debug for project MyFinalProject ****
+make all 
+Building file: ../src/Movement.cpp
+Invoking: GCC C++ Compiler
+g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/Movement.d" -MT"src/Movement.o" -o "src/Movement.o" "../src/Movement.cpp"
+../src/Movement.cpp: In member function ‘void Movement::moveBackwards()’:
+../src/Movement.cpp:124:6: warning: unused variable ‘selfRotate’ [-Wunused-variable]
+  int selfRotate = 80;
+      ^
+../src/Movement.cpp:125:6: warning: unused variable ‘random’ [-Wunused-variable]
+  int random;
+      ^
+../src/Movement.cpp: In member function ‘void Movement::uTurn()’:
+../src/Movement.cpp:146:6: warning: unused variable ‘random’ [-Wunused-variable]
+  int random;
+      ^
+../src/Movement.cpp: In member function ‘void Movement::randomMovement()’:
+../src/Movement.cpp:194:2: error: expected ‘}’ at end of input
+  }
+  ^
+make: *** [src/Movement.o] Error 1
+17:02:15 **** Incremental Build of configuration Debug for project MyFinalProject ****
+make all 
+Building file: ../src/Movement.cpp
+Invoking: GCC C++ Compiler
+g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/Movement.d" -MT"src/Movement.o" -o "src/Movement.o" "../src/Movement.cpp"
+../src/Movement.cpp: In member function ‘void Movement::moveBackwards()’:
+../src/Movement.cpp:124:6: warning: unused variable ‘selfRotate’ [-Wunused-variable]
+  int selfRotate = 80;
+      ^
+../src/Movement.cpp:125:6: warning: unused variable ‘random’ [-Wunused-variable]
+  int random;
+      ^
+../src/Movement.cpp: In member function ‘void Movement::uTurn()’:
+../src/Movement.cpp:146:6: warning: unused variable ‘random’ [-Wunused-variable]
+  int random;
+      ^
+Finished building: ../src/Movement.cpp
+ 
+Building target: MyFinalProject
+Invoking: GCC C++ Linker
+g++  -o "MyFinalProject"  ./src/LocalizationManager.o ./src/Map.o ./src/Movement.o ./src/Particle.o ./src/Robot.o ./src/main.o   -lopencv_highgui -lHamsterAPICommon -lopencv_core -lCogniAlgCPP -lHamsterAPIClientCPP
+Finished building target: MyFinalProject
+ 

@@ -1,0 +1,15 @@
+11:55:05 **** Incremental Build of configuration Debug for project ExampleHamster ****
+make all 
+Building file: ../main.cpp
+Invoking: Cross G++ Compiler
+g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"main.d" -MT"main.o" -o "main.o" "../main.cpp"
+Finished building: ../main.cpp
+ 
+Building target: ExampleHamster
+Invoking: Cross G++ Linker
+g++  -o "ExampleHamster"  ./main.o   -lHamsterAPICommon -lCogniAlgCPP -lHamsterAPIClientCPP -lopencv_core -lopencv_highgui
+Finished building target: ExampleHamster
+ 
+
+11:55:14 Build Finished (took 9s.495ms)
+

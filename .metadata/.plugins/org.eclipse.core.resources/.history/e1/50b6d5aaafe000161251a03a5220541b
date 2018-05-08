@@ -1,0 +1,193 @@
+/*
+ * Movement.cpp
+ *
+ *  Created on: Jan 20, 2017
+ *      Author: user
+ */
+
+#include "Movement.h"
+using namespace std;
+using namespace HamsterAPI;
+
+
+void getScansBetween(double min, double max, std::vector<double> & distances) {
+	HamsterAPI::LidarScan scan = _hamster->getLidarScan();
+
+	for (size_t i = 0; i < scan.getScanSize(); i++) {
+		double degree = scan.getScanAngleIncrement() * i;
+		if (degree >= min && degree <= max)
+			distances.push_back(scan.getDistance(i));
+	}
+}
+
+bool willCollide(std::vector<double> distances, int angle_from_center) {
+	HamsterAPI::LidarScan scan = hamster->getLidarScan();
+
+	int collisions = 0;
+
+	for (size_t i = distances.size() / 2 - angle_from_center / 2;
+			i < distances.size() / 2 + angle_from_center / 2; i++)
+		if (distances[i] < scan.getMaxRange() / 4.0)
+			collisions++;
+
+	return collisions >= angle_from_center / 4.0;
+}
+
+Movement::Movement(HamsterAPI::Hamster * hamster) {
+	this->_hamster = hamster;
+}
+bool isFrontFree() {
+	// Degrees : [90, 270]
+
+	std::vector<double> distances;
+
+	getScansBetween(90, 270, distances);
+
+	return !willCollide(distances, DISTANCE_FREE);
+}
+
+bool isLeftFree() {
+	// Degrees : [180,360]
+
+	std::vector<double> distances;
+
+	getScansBetween(180, 360, distances);
+
+	return !willCollide(distances, DISTANCE_FREE);
+}
+
+bool isRightFree() {
+	// Degrees : [0, 180]
+
+	std::vector<double> distances;
+
+	getScansBetween(0, 180, distances);
+
+	return !willCollide(distances, DISTANCE_FREE);
+}
+
+bool isBackFree() {
+	// Degrees : [270,360], [0, 90]
+
+	std::vector<double> distances;
+
+	getScansBetween(270, 360, distances);
+	getScansBetween(0, 90, distances);
+
+	return !willCollide(distances, DISTANCE_FREE);
+}
+
+void moveForward() {
+	HamsterAPI::Log::i("Client", "Moving Forward");
+	hamster->sendSpeed(0.4, 0.0);
+	lastAction = forward;
+}
+
+void turnLeft() {
+	HamsterAPI::Log::i("Client", "Turning Left");
+	while ((!isFrontFree()&&isLeftFree()) || isStuckFlag) {
+		hamster->sendSpeed(0.04, 45.0);
+	}
+	lastAction = leftWay;
+	isStuckFlag = false;
+}
+
+void turnRight() {
+	HamsterAPI::Log::i("Client", "Turning Right");
+	while ((!isFrontFree()&&isRightFree()) || isStuckFlag) {
+		hamster->sendSpeed(0.04, -45.0);
+	}
+	lastAction = rightWay;
+	isStuckFlag = false;
+}
+
+void moveBackwards() {
+	float angle = 0.0;
+	while ((!isLeftFree() || !isRightFree() )&& isBackFree()) {
+		HamsterAPI::Log::i("Client", "Moving Backwards");
+		hamster->sendSpeed(-0.4, angle);
+		if (isRightFree()  || lastAction == rightWay)
+			angle = 45.0;
+		else if (isLeftFree()|| lastAction == leftWay)
+			angle = -45.0;
+		else if(lastAction != forward)
+			angle = 0.0;
+
+
+	}
+	int selfRotate = 80;
+	int random;
+//	while((isLeftFree() || isRightFree() ) && selfRotate>0){
+//		selfRotate--;
+//		stopMoving();
+//		if (isRightFree() && isLeftFree()) {
+//			random = rand() % 2;
+//			if (random == 1)
+//				turnRight();
+//			else
+//				turnLeft();
+//
+//		} else if (isLeftFree() && lastAction == leftWay)
+//			turnLeft();
+//		else if (isRightFree() && lastAction == rightWay)
+//			turnRight();
+
+	lastAction = backward;
+}
+
+void uTurn(){
+	int selfRotate = 80;
+	int random;
+
+	while( selfRotate>0){
+		selfRotate--;
+		if (selfRotate >= 40)hamster->sendSpeed(-0.4, -45);
+		else if(selfRotate < 40) hamster->sendSpeed(0.4, 45);
+		HamsterAPI::Log::i("Client", "U-Turn");
+	}
+}
+void stopMoving() {
+	hamster->sendSpeed(0.0, 0.0);
+}
+void Movement::randomMovement() {
+
+//	int random;
+//
+//	if (isFrontFree() && lastAction !=backward)
+//		moveForward();
+//	else {
+//		stopMoving();
+//		if (isRightFree() && isLeftFree()) {
+//			random = rand() % 2;
+//			if (random == 1)
+//				turnRight();
+//			else
+//				turnLeft();
+//
+//		} else if (isLeftFree())
+//			turnLeft();
+//		else if (isRightFree())
+//			turnRight();
+//		else if (isBackFree()) {
+//			moveBackwards();
+//
+//		}
+//
+//		else {
+//			isStuckFlag = true;
+//			HamsterAPI::Log::i("Client", "I am stuck!");
+//			uTurn();
+////			moveBackwards();
+////			turnRight();
+////			moveBackwards();
+////			moveForward();
+//
+//		}
+//	}
+
+	int selfRotate = 80;
+
+	while (selfRotate >= 40)hamster->sendSpeed(-0.4, -45);
+
+
+}

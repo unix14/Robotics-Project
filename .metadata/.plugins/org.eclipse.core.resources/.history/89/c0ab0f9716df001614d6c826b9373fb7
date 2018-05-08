@@ -1,0 +1,27 @@
+/*
+ * Movement.cpp
+ *
+ *  Created on: Jan 20, 2017
+ *      Author: user
+ */
+
+#include "Movement.h"
+
+Movement::Movement(HamsterAPI::Hamster * hamster) {
+	this->_hamster = hamster;
+}
+
+void Movement::randomMovement() {
+	HamsterAPI::LidarScan ld = _hamster->getLidarScan();
+	if (ld.getDistance(180) < 0.4) {
+		_hamster->sendSpeed(-0.5, 0);
+		cout << "Front: " << ld.getDistance(180) << endl;
+	} else if (ld.getDistance(180) < 0.8) {
+		_hamster->sendSpeed(0.5, 45);
+		cout << "Front: " << ld.getDistance(180) << endl;
+	}
+
+	else
+		hamster->sendSpeed(1.0, 0);
+
+}

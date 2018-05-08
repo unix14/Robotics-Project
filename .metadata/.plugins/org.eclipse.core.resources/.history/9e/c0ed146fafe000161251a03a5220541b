@@ -1,0 +1,27 @@
+/*
+ * Movement.h
+ *
+ *  Created on: Jan 20, 2017
+ *      Author: user
+ */
+
+#ifndef MOVEMENT_H_
+#define MOVEMENT_H_
+
+#include <HamsterAPIClientCPP/Hamster.h>
+
+using namespace std;
+using namespace HamsterAPI;
+
+class Movement {
+
+private:
+	HamsterAPI::Hamster * _hamster;
+
+public:
+	Movement(HamsterAPI::Hamster*);
+	void randomMovement();
+
+};
+
+#endif /* MOVEMENT_H_ */

@@ -1,0 +1,16 @@
+/*
+ * Movement.cpp
+ *
+ *  Created on: Jan 20, 2017
+ *      Author: user
+ */
+
+#include "Movement.h"
+
+Movement::Movement(HamsterAPI::Hamster * _hamster){
+
+}
+
+void Movement::randomMovement(){
+
+}

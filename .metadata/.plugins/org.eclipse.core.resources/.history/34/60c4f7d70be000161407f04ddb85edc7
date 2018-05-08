@@ -1,0 +1,165 @@
+/*
+ * LocalizationManager.cpp
+ *
+ *  Created on: Jan 15, 2017
+ *      Author: user
+ */
+
+#include "LocalizationManager.h"
+
+LocalizationManager::LocalizationManager(const OccupancyGrid& ogrid,
+		Hamster* hamster) :
+		ogrid(ogrid), hamster(hamster) {
+
+}
+
+void LocalizationManager::getRandomLocation(Particle* particle) {
+
+	do {
+		particle->x = rand() % ogrid.getWidth();
+		particle->y = rand() % ogrid.getHeight();
+
+	} while (ogrid.getCell(particle->x, particle->y) != CELL_FREE);
+
+	particle->x = particle->x * ogrid.getResolution();
+	particle->y = particle->y * ogrid.getResolution();
+
+	particle->yaw = rand() % 360;
+}
+
+void LocalizationManager::initParticles() {
+
+	particles.resize(PARTICLES_NUM);
+
+	for (int i = 0; i < particles.size(); ++i) {
+		particles[i] = new Particle();
+		getRandomLocation(particles[i]);
+	}
+
+}
+
+void LocalizationManager::updateParticles(double deltaX, double deltaY,
+		double deltaYaw) {
+
+	for (int i = 0; i < particles.size(); ++i) {
+
+		Particle* particle = particles[i];
+		particle->x += deltaX;
+		particle->y += deltaY;
+		particle->yaw += deltaYaw;
+
+		particle->i = particle->y / ogrid.getResolution();
+		particle->j = particle->x / ogrid.getResolution();
+
+		particle->belief = computeBelief(particle);
+	}
+
+	//finding top 5 particles
+	Particle* max = particles[0];
+	int index = 0;
+	for (int i = 0; i < 5; i++) {
+		for (int j = 1; j < particles.size(); j++) {
+			if (particles[j]->belief > max->belief) {
+				max = particles[j];
+				index = j;
+
+			}
+		}
+		particles[index]->belief = 0;
+		topParticles[i] = max;
+	}
+
+	//
+	for (int i = 0; i < 50; i++) {
+		particles[i]->x = rand() % ((int) topParticles[0]->x + 50)
+				+ ((int) topParticles[0]->x - 50);
+		particles[i]->y = rand() % ((int) topParticles[0]->y + 50)
+				+ ((int) topParticles[0]->y - 50);
+
+		particles[i]->i = particles[i]->y / ogrid.getResolution();
+		particles[i]->j = particles[i]->x / ogrid.getResolution();
+	}
+	for (int i = 50; i < 100; i++) {
+		particles[i]->x = rand() % ((int) topParticles[0]->x + 50)
+				+ ((int) topParticles[1]->x - 50);
+		particles[i]->y = rand() % ((int) topParticles[0]->y + 50)
+				+ ((int) topParticles[1]->y - 50);
+
+		particles[i]->i = particles[i]->y / ogrid.getResolution();
+		particles[i]->j = particles[i]->x / ogrid.getResolution();
+	}
+	for (int i = 100; i < 150; i++) {
+		particles[i]->x = rand() % ((int) topParticles[0]->x + 50)
+				+ ((int) topParticles[2]->x - 50);
+		particles[i]->y = rand() % ((int) topParticles[0]->y + 50)
+				+ ((int) topParticles[2]->y - 50);
+
+		particles[i]->i = particles[i]->y / ogrid.getResolution();
+		particles[i]->j = particles[i]->x / ogrid.getResolution();
+	}
+	for (int i = 150; i < 200; i++) {
+		particles[i]->x = rand() % ((int) topParticles[0]->x + 50)
+				+ ((int) topParticles[3]->x - 50);
+		particles[i]->y = rand() % ((int) topParticles[0]->y + 50)
+				+ ((int) topParticles[3]->y - 50);
+
+		particles[i]->i = particles[i]->y / ogrid.getResolution();
+		particles[i]->j = particles[i]->x / ogrid.getResolution();
+	}
+
+}
+
+vector<Particle*> LocalizationManager::getParticles() {
+	return this->particles;
+}
+
+double LocalizationManager::computeBelief(Particle* particle) {
+	LidarScan scan = hamster->getLidarScan();
+
+	int hits = 0;
+	int misses = 0;
+
+	for (int i = 0; i < scan.getScanSize(); i++) {
+
+		double angle = scan.getScanAngleIncrement() * i * DEG2RAD;
+
+		if (scan.getDistance(i) < scan.getMaxRange() - 0.001) {
+
+			double obsX = particle->x
+					+ scan.getDistance(i)
+							* cos(
+									angle + particle->yaw * DEG2RAD
+											- 180 * DEG2RAD);
+			double obsY = particle->y
+					+ scan.getDistance(i)
+							* sin(
+									angle + particle->yaw * DEG2RAD
+											- 180 * DEG2RAD);
+
+			int pixelsX = obsX / ogrid.getResolution() + ogrid.getWidth() / 2;
+			int pixelsY = obsY / ogrid.getResolution() + ogrid.getHeight() / 2;
+
+			if (ogrid.getCell(pixelsX, pixelsY) == CELL_OCCUPIED) {
+				hits++;
+			} else {
+				misses++;
+			}
+		}
+	}
+
+	return (float) hits / (hits + misses);
+}
+
+void LocalizationManager::printParticles() const {
+	for (int i = 0; i < particles.size(); ++i) {
+		Particle* particle = particles[i];
+
+		cout << "Particle " << i << ": " << particle->x << "," << particle->y
+				<< ", Belief: " << particle->belief << endl;
+
+	}
+}
+LocalizationManager::~LocalizationManager() {
+	// TODO Auto-generated destructor stub
+}
+

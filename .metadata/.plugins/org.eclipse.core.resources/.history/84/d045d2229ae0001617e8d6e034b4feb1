@@ -1,0 +1,107 @@
+/*
+ * main.cpp
+ *
+ *  Created on: Jan 19, 2017
+ *      Author: user
+ */
+
+#include <HamsterAPIClientCPP/Hamster.h>
+#include <HamsterAPICommon/Common/HamsterError.h>
+#include <HamsterAPICommon/Common/Log.h>
+#include <HamsterAPICommon/Messages/OccupancyGrid.h>
+#include <unistd.h>
+
+#include "LocalizationManager.h"
+#include "Movement.h"
+#include "Robot.h"
+
+using namespace std;
+using namespace HamsterAPI;
+
+HamsterAPI::Hamster* hamster;
+
+void showOccGrid(OccupancyGrid ogrid, vector<Particle*> particles,Particle* arr[]) {
+	int width = ogrid.getWidth();
+	int height = ogrid.getHeight();
+	unsigned char pixel;
+
+	cv::Mat mat(width, height, CV_8UC3, cv::Scalar(0, 0, 0));
+
+	//drawing the SLAM
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++) {
+			if (ogrid.getCell(i, j) == CELL_FREE)
+				pixel = 255;
+			else if (ogrid.getCell(i, j) == CELL_OCCUPIED)
+				pixel = 0;
+			else
+				pixel = 128;
+
+			mat.at<cv::Vec3b>(i, j)[0] = pixel;
+			mat.at<cv::Vec3b>(i, j)[1] = pixel;
+			mat.at<cv::Vec3b>(i, j)[2] = pixel;
+		}
+
+	//drawing the red particles
+	for (int i = 0; i < particles.size(); i++) {
+
+		mat.at<cv::Vec3b>(particles[i]->j, particles[i]->i)[0] = 0;
+		mat.at<cv::Vec3b>(particles[i]->j, particles[i]->i)[1] = 0;
+		mat.at<cv::Vec3b>(particles[i]->j, particles[i]->i)[2] = 255;
+
+	}
+
+	//drawing the top 5 particles in green
+	for (int i = 0; i < 5; i++) {
+
+		mat.at<cv::Vec3b>(arr[i]->j,arr[i]->i)[0] = 0;
+		mat.at<cv::Vec3b>(arr[i]->j, arr[i]->i)[1] = 255;
+		mat.at<cv::Vec3b>(arr[i]->j, arr[i]->i)[2] = 0;
+
+	}
+
+	cv::imshow("OccupancyGrid-view", mat);
+	cv::waitKey(1);
+
+}
+
+int main() {
+	try {
+		hamster = new HamsterAPI::Hamster(1);
+		sleep(4);
+
+		OccupancyGrid ogrid = hamster->getSLAMMap();
+
+		Robot* robot = new Robot(hamster);
+		LocalizationManager* locManager = new LocalizationManager(ogrid,
+				hamster);
+		Movement* movement = new Movement(hamster);
+
+		locManager->initParticles();
+		int counter=0;
+		while (hamster->isConnected()) {
+			try {
+				movement->randomMovement();
+
+				robot->updatePose();
+				locManager->updateParticles(robot->getDeltaX(),
+						robot->getDeltaY(), robot->getDeltaYaw(),counter);
+
+				showOccGrid(ogrid, locManager->getParticles(),locManager->topParticles);
+
+				locManager->printParticles();
+				//sleep(2);
+				if(counter<50)
+					counter++;
+
+			} catch (const HamsterAPI::HamsterError & message_error) {
+				HamsterAPI::Log::i("Client", message_error.what());
+			}
+
+		}
+	} catch (const HamsterAPI::HamsterError & connection_error) {
+		HamsterAPI::Log::i("Client", connection_error.what());
+	}
+	return 0;
+
+}

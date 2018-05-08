@@ -1,0 +1,85 @@
+/*
+ * main.cpp
+ *
+ *  Created on: Jan 19, 2017
+ *      Author: user
+ */
+
+#include <HamsterAPIClientCPP/Hamster.h>
+#include <HamsterAPICommon/Common/HamsterError.h>
+#include <HamsterAPICommon/Common/Log.h>
+#include <HamsterAPICommon/Messages/OccupancyGrid.h>
+#include <unistd.h>
+
+#include "LocalizationManager.h"
+#include "Movement.h"
+#include "Robot.h"
+
+using namespace std;
+using namespace HamsterAPI;
+
+HamsterAPI::Hamster* hamster;
+
+void showOccGrid(OccupancyGrid ogrid) {
+	int width = ogrid.getWidth();
+	int height = ogrid.getHeight();
+	unsigned char pixel;
+
+	cv::Mat m = cv::Mat(width, height, CV_8UC1);
+
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++) {
+			if (ogrid.getCell(i, j) == CELL_FREE)
+				pixel = 255;
+			else if (ogrid.getCell(i, j) == CELL_OCCUPIED)
+				pixel = 0;
+			else
+				pixel = 128;
+
+			m.at<unsigned char>(i, j) = pixel;
+		}
+
+	cv::imshow("OccupancyGrid-view", m);
+	cv::waitKey(1);
+
+}
+
+int main() {
+	try {
+		hamster = new HamsterAPI::Hamster(1);
+		sleep(2);
+
+		OccupancyGrid ogrid = hamster->getSLAMMap();
+
+		Robot* robot = new Robot(hamster);
+		LocalizationManager* locManager = new LocalizationManager(ogrid,
+				hamster);
+		Movement* movement = new Movement(hamster);
+
+		locManager->initParticles();
+
+		while (hamster->isConnected()) {
+			try {
+				movement->randomMovement();
+
+				robot->updatePose();
+				locManager->updateParticles(robot->getDeltaX(),	robot->getDeltaY(), robot->getDeltaYaw());
+
+				showOccGrid(ogrid);
+
+				//show particles on screen
+
+				locManager->printParticles();
+				sleep(0.5);
+
+			} catch (const HamsterAPI::HamsterError & message_error) {
+				HamsterAPI::Log::i("Client", message_error.what());
+			}
+
+		}
+	} catch (const HamsterAPI::HamsterError & connection_error) {
+		HamsterAPI::Log::i("Client", connection_error.what());
+	}
+	return 0;
+
+}
